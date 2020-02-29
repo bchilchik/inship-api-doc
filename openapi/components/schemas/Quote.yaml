@@ -1,0 +1,7 @@
+title: Insurance Quote
+description: The insurance quote provided.
+type: object
+properties:
+  price:
+    type: string
+    description: Quote for the insured value provided.
