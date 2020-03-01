@@ -9,6 +9,11 @@
   "scripts": {
     "start": "openapi preview-docs",
     "build": "openapi bundle -o dist",
-    "test": "openapi validate"
+    "test": "openapi validate",
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+    "gh-pages": "^2.2.0",
+    "redoc-cli": "^0.9.6"
   }
 }
