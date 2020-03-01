@@ -2,7 +2,8 @@
   "name": "inship-api",
   "version": "1.0.0",
   "dependencies": {
-    "@redocly/openapi-cli": "^0.8.3"
+    "@redocly/openapi-cli": "^0.8.3",
+    "redoc": "^2.0.0-rc.23"
   },
   "private": true,
   "scripts": {
