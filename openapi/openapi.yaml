@@ -7,7 +7,6 @@ info:
 
     # Authentication
 
-    <!-- ReDoc-Inject: <security-definitions> -->
   termsOfService: 'https://www.inship.com.au/terms'
   contact:
     url: 'https://www.inship.com.au/contact'
