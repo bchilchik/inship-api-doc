@@ -5,6 +5,10 @@ info:
   description: |-
     The following documentation describes the current Inship API (version 1).
 
+    # Authentication
+
+    <!-- ReDoc-Inject: <security-definitions> -->
+
 
   termsOfService: 'https://www.inship.com.au/terms'
   contact:
