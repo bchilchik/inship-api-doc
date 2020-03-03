@@ -1,0 +1,416 @@
+openapi: 3.0.0
+info:
+  title: Inship
+  description: |-
+    The following documentation describes the current Inship API (version 1).
+
+    # Authentication
+
+    <!-- ReDoc-Inject: <security-definitions> -->
+  termsOfService: https://www.inship.com.au/terms
+  contact:
+    name: Inship Support
+    url: https://www.inship.com.au/contact
+    email: support@inship.com.au
+  version: "1.0"
+  x-logo:
+    url: https://inship-dev-bucket.storage.googleapis.com/logo.png
+    altText: Inship logo
+    href: https://www.inship.com.au
+servers:
+- url: https://www.inship.io/api/v1
+  description: Inship API Production
+- url: https://staging.inship.io/api/v1
+  description: Inship API Staging
+tags:
+- name: Book
+  description: The Book API allows consumers to generate a quote and book insurance
+    for a valid shipment.
+- name: Claim
+  description: The Claim API allows consumers to lodge a claim for a given insurance
+    policy arranged through Inship.
+paths:
+  /insurance/quote:
+    get:
+      tags:
+      - Book
+      summary: Retrieve an insurance quote
+      description: Given a total insured value of a shipment (including freight),
+        this will generate a quote based on the pre-defined rating structure agreed
+        with the merchant.
+      parameters:
+      - name: value
+        in: query
+        description: The insured value of the shipment including freight
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: number
+          format: float
+      responses:
+        "200":
+          description: Returns an insurance quote for the given insured value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+              examples:
+                Example Successful Quote Response:
+                  value:
+                    insurance_quote:
+                      price: "24.08"
+        "400":
+          description: Required query parameter and value not provided in the correct
+            format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example Invalid Request Response:
+                  value:
+                    error:
+                      timestamp: 1582954269777
+                      status: 400
+                      errors:
+                      - Required float parameter 'value' is not present
+        "401":
+          description: Unauthorized request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example Unauthorised Request Response:
+                  value:
+                    error:
+                      timestamp: 1582954269777
+                      status: 401
+                      errors:
+                      - You are not authorised to access this resource
+      security:
+      - AuthToken: []
+  /insurance/book:
+    post:
+      tags:
+      - Book
+      summary: Book an insurance policy
+      description: Given a valid shipment payload, this will arrange cover for this
+        shipment. The premium for this insurance policy will be based on the insured
+        value provided. This will be included in the API response.
+      requestBody:
+        description: The shipment object to be insured
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipmentRequest'
+            examples:
+              Example Shipmemt Request:
+                value:
+                  insuredName: Cool Clothing Store
+                  insuredEmail: online@coolclothingstore.com
+                  insuredAmount: "550.24"
+                  itemDescription: 2x shirts and short
+                  origStreetAddress: 5/18 Jones Avenue
+                  origSuburb: Long Bay
+                  origState: NSW
+                  origPostcode: "2000"
+                  origCountry: Australia
+                  destStreetAddress: 140 Rams Avenue
+                  destSuburb: Bondi
+                  destState: NSW
+                  destPostcode: "2026"
+                  destCountry: Australia
+                  consignmentNumber: TXN12121212
+                  courier: TNT
+                  numPackages: "3"
+                  insuredCalculationPreference: retail
+      responses:
+        "200":
+          description: Returns an insurance confirmation containing the policy ID,
+            insured name, email and insurance premium including GST
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+              examples:
+                Example Successful Quote Response:
+                  value:
+                    insurance_confirmation:
+                      policyId: "100096"
+                      insuredName: Cool Clothing Store
+                      insuredEmail: online@coolclothingstore.com
+                      insurancePremium: 13.19
+        "400":
+          description: Returns an error response with a human-readable error message explaining why the request was invaled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example Invalid Request Response:
+                  value:
+                    error:
+                      timestamp: 1582954269777
+                      status: 400
+                      errors:
+                      - Destination postcode not provided
+                      - Destination state not provided
+        "401":
+          description: Unauthorized request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example Unauthorised Request Response:
+                  value:
+                    error:
+                      timestamp: 1582954269777
+                      status: 401
+                      errors:
+                      - You are not authorised to access this resource
+      security:
+      - AuthToken: []
+  /insurance/create-claim:
+    post:
+      tags:
+      - Claim
+      summary: Lodge an insurance claim
+      description: Given a valid Claim payload, this API first checks that the policy
+        ID provided exists, and that the authenticated user is authorised to lodge
+        the claim. Once authorised, the API will check that the claim amount is not
+        greater than the total insured value and that a claim has not already been
+        lodged for this policy. It will then calculate any applicable excess and process
+        the claim accordingly. A claim acknowledgement email will be sent to the insured's
+        email address.
+      requestBody:
+        description: The claim object to be insured
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRequest'
+            examples:
+              Example Claim Request:
+                value:
+                  policyId: "100090"
+                  claimAmount: "325.48"
+                  claimType: damage due to crushing
+                  incidentDescription: tv damaged
+      responses:
+        "200":
+          description: Returns a claim confirmation containing the unique claim ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+              examples:
+                Example Successful Quote Response:
+                  value:
+                    claim_confirmation:
+                      claimId: "12345"
+        "400":
+          description: Returns an error response with a human-readable error message explaining why the request was invaled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example Invalid Request Response:
+                  value:
+                    error:
+                      timestamp: 1582954248573
+                      status: 400
+                      errors:
+                      - User does not have access to this policy or policy does not
+                        exist
+        "401":
+          description: Unauthorized request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Example Unauthorised Request Response:
+                  value:
+                    error:
+                      timestamp: 1582954269777
+                      status: 401
+                      errors:
+                      - You are not authorised to access this resource
+      security:
+      - AuthToken: []
+components:
+  schemas:
+    QuoteResponse:
+      title: Root Type for QuoteResponse
+      type: object
+      properties:
+        insurance_quote:
+          $ref: '#/components/schemas/Quote'
+      description: Represents the successful quote response.
+    Quote:
+      title: Insurance Quote
+      type: object
+      properties:
+        price:
+          type: string
+          description: Quote for the insured value provided.
+      description: The insurance quote created.
+    ShipmentRequest:
+      title: Shipment Request
+      type: object
+      properties:
+        insuredName:
+          type: string
+          description: The name of the insured party (as agreed with Inship)
+        insuredEmail:
+          type: string
+          description: The email address of the insured party (as agreed with Inship)
+        insuredAmount:
+          type: string
+          description: The total value of the goods in the consignment. Please insure
+            for the consignments full value to avoid under-insurance prejudice
+        itemDescription:
+          type: string
+          description: General description of the goods in this consignment
+        origStreetAddress:
+          type: string
+          description: Origin street address
+        origSuburb:
+          type: string
+          description: Origin suburb
+        origState:
+          type: string
+          description: Origin state using three letter abbreviation e.g. NSW
+        origPostcode:
+          type: string
+          description: Origin postcode
+        origCountry:
+          type: string
+          description: Origin country. Must be Australia
+        destStreetAddress:
+          type: string
+          description: Destination street address
+        destSuburb:
+          type: string
+          description: Destination suburb
+        destState:
+          type: string
+          description: Destination state using three letter abbreviation e.g. NSW
+        destPostcode:
+          type: string
+          description: Destination postcode
+        destCountry:
+          type: string
+          description: Detination country. Must be Australia
+        consignmentNumber:
+          type: string
+          description: The carrier's consignment number obtained when booking the
+            shipment. This consignment must not have already been insured.
+        courier:
+          type: string
+          description: The carrier's name
+        numPackages:
+          type: string
+          description: The number of packages to be shipped in this consignment
+        insuredCalculationPreference:
+          type: string
+          description: The shipment must be insured for either its retail or wholesale
+            value. This field must be either 'retail' or 'wholesale' to reflect the
+            insured's choice.
+      description: The shipment object to be insured.
+    ClaimRequest:
+      title: Claim Request
+      type: object
+      properties:
+        policyId:
+          type: string
+          description: The policy ID to be claimed. The policy must be owned by the
+            authenticated user and a claim for this policy must not already exist.
+        claimAmount:
+          type: string
+          description: Total claim amount including freight costs. This must not be
+            greater than the total insured value (including freight).
+        claimType:
+          type: string
+          description: The reason for the claim. The value of this field must be one
+            of the following - 'damage due to breakage', 'damage due to crushing',
+            'damage due to ingress of water', 'damage due to other', 'loss due to
+            theft/non delivery'. Any value other than these exact strings will be
+            rejected.
+        incidentDescription:
+          type: string
+          description: A brief description of the incident resulting in this claim.
+      description: The claim object which includes the policy ID to be claimed against
+        as well as the claim amount.
+    ClaimResponse:
+      title: Root Type for Claim Response
+      type: object
+      properties:
+        claim_confirmation:
+          $ref: '#/components/schemas/Claim'
+      description: The insurance claim returned
+    Claim:
+      title: Insurance Claim
+      type: object
+      properties:
+        claimId:
+          type: string
+          description: The unique claim ID associated with this insurance claim.
+      description: The insurance claim object returned.
+    PolicyResponse:
+      title: Root Type for Policy Response
+      type: object
+      properties:
+        insurance_confirmation:
+          $ref: '#/components/schemas/Policy'
+      description: The insurance policy returned
+    Policy:
+      title: Insurance Policy
+      type: object
+      properties:
+        policyId:
+          type: string
+          description: The unique policy id for this insured consignmnent.
+        insuredName:
+          type: string
+          description: The name of the insured party
+        insuredEmail:
+          type: string
+          description: The email address of the insured party
+        insurancePremium:
+          type: number
+          description: The insurance premium incl. GST
+          format: float
+      description: The insurance policy object returned.
+    ErrorResponse:
+      title: Root Type for Error
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      description: Represents the error response object.
+    Error:
+      title: Error
+      properties:
+        timestamp:
+          type: integer
+          description: Timestamp of the error event.
+        status:
+          type: integer
+          description: Error code
+        errors:
+          type: array
+          description: List of error message in human-readable form
+          items:
+            type: string
+      description: The error object returned.
+  securitySchemes:
+    AuthToken:
+      type: apiKey
+      description: |
+        To make requests to the API, an authentication token is required. This can be passed by including the `api_key` HTTP header on all API requests.
+      name: api_key
+      in: header
