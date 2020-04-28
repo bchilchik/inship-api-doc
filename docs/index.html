@@ -18,7 +18,7 @@
     </style>
   </head>
   <body>
-<!--     <redoc spec-url="https://inship-dev-bucket.storage.googleapis.com/openapi.yaml"></redoc> -->
+  <redoc></redoc>
     <script src="https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js"> </script>
     <script>
       Redoc.init('https://inship-dev-bucket.storage.googleapis.com/openapi.yaml', { // options
@@ -27,7 +27,7 @@
             maxHeight: '80px'
           }
         }
-      })
+      } document.getElementById('redoc')))
     </script>
   </body>
 </html>
